@@ -12,20 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Mask2Former model configuration"""
+"""Mask2Former model configuration"""
+
 from typing import Dict, List, Optional
 
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
+from ...utils.backbone_utils import verify_backbone_config_arguments
 from ..auto import CONFIG_MAPPING
 
-
-MASK2FORMER_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "facebook/mask2former-swin-small-coco-instance": (
-        "https://huggingface.co/facebook/mask2former-swin-small-coco-instance/blob/main/config.json"
-    )
-    # See all Mask2Former models at https://huggingface.co/models?filter=mask2former
-}
 
 logger = logging.get_logger(__name__)
 
@@ -53,6 +48,12 @@ class Mask2FormerConfig(PretrainedConfig):
             is `False`, this loads the backbone's config and uses that to initialize the backbone with random weights.
         use_pretrained_backbone (`bool`, *optional*, `False`):
             Whether to use pretrained weights for the backbone.
+        use_timm_backbone (`bool`, *optional*, `False`):
+            Whether to load `backbone` from the timm library. If `False`, the backbone is loaded from the transformers
+            library.
+        backbone_kwargs (`dict`, *optional*):
+            Keyword arguments to be passed to AutoBackbone when loading from a checkpoint
+            e.g. `{'out_indices': (0, 1, 2, 3)}`. Cannot be specified if `backbone_config` is set.
         feature_size (`int`, *optional*, defaults to 256):
             The features (channels) of the resulting feature maps.
         mask_feature_size (`int`, *optional*, defaults to 256):
@@ -159,22 +160,18 @@ class Mask2FormerConfig(PretrainedConfig):
         init_xavier_std: float = 1.0,
         use_auxiliary_loss: bool = True,
         feature_strides: List[int] = [4, 8, 16, 32],
-        output_auxiliary_logits: bool = None,
-        backbone=None,
-        use_pretrained_backbone=False,
+        output_auxiliary_logits: Optional[bool] = None,
+        backbone: Optional[str] = None,
+        use_pretrained_backbone: bool = False,
+        use_timm_backbone: bool = False,
+        backbone_kwargs: Optional[Dict] = None,
         **kwargs,
     ):
-        if use_pretrained_backbone:
-            raise ValueError("Pretrained backbones are not supported yet.")
-
-        if backbone_config is not None and backbone is not None:
-            raise ValueError("You can't specify both `backbone` and `backbone_config`.")
-
         if backbone_config is None and backbone is None:
             logger.info("`backbone_config` is `None`. Initializing the config with the default `Swin` backbone.")
             backbone_config = CONFIG_MAPPING["swin"](
                 image_size=224,
-                in_channels=3,
+                num_channels=3,
                 patch_size=4,
                 embed_dim=96,
                 depths=[2, 2, 18, 2],
@@ -184,12 +181,18 @@ class Mask2FormerConfig(PretrainedConfig):
                 use_absolute_embeddings=False,
                 out_features=["stage1", "stage2", "stage3", "stage4"],
             )
-
-        if isinstance(backbone_config, dict):
+        elif isinstance(backbone_config, dict):
             backbone_model_type = backbone_config.pop("model_type")
             config_class = CONFIG_MAPPING[backbone_model_type]
             backbone_config = config_class.from_dict(backbone_config)
 
+        verify_backbone_config_arguments(
+            use_timm_backbone=use_timm_backbone,
+            use_pretrained_backbone=use_pretrained_backbone,
+            backbone=backbone,
+            backbone_config=backbone_config,
+            backbone_kwargs=backbone_kwargs,
+        )
         # verify that the backbone is supported
         if backbone_config is not None and backbone_config.model_type not in self.backbones_supported:
             logger.warning_once(
@@ -228,6 +231,8 @@ class Mask2FormerConfig(PretrainedConfig):
         self.num_hidden_layers = decoder_layers
         self.backbone = backbone
         self.use_pretrained_backbone = use_pretrained_backbone
+        self.use_timm_backbone = use_timm_backbone
+        self.backbone_kwargs = backbone_kwargs
 
         super().__init__(**kwargs)
 
@@ -246,3 +251,6 @@ class Mask2FormerConfig(PretrainedConfig):
             backbone_config=backbone_config,
             **kwargs,
         )
+
+
+__all__ = ["Mask2FormerConfig"]

@@ -16,6 +16,12 @@ rendered properly in your Markdown viewer.
 
 # Phi
 
+<div class="flex flex-wrap space-x-1">
+<img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-DE3412?style=flat&logo=pytorch&logoColor=white">
+<img alt="FlashAttention" src="https://img.shields.io/badge/%E2%9A%A1%EF%B8%8E%20FlashAttention-eae0c8?style=flat">
+<img alt="SDPA" src="https://img.shields.io/badge/SDPA-DE3412?style=flat&logo=pytorch&logoColor=white">
+</div>
+
 ## Overview
 
 The Phi-1 model was proposed in [Textbooks Are All You Need](https://arxiv.org/abs/2306.11644) by Suriya Gunasekar, Yi Zhang, Jyoti Aneja, Caio César Teodoro Mendes, Allie Del Giorno, Sivakanth Gopi, Mojan Javaheripi, Piero Kauffmann, Gustavo de Rosa, Olli Saarikivi, Adil Salim, Shital Shah, Harkirat Singh Behl, Xin Wang, Sébastien Bubeck, Ronen Eldan, Adam Tauman Kalai, Yin Tat Lee and Yuanzhi Li.
@@ -92,7 +98,9 @@ Phi-2 has been integrated in the development version (4.37.0.dev) of `transforme
 >>> outputs = model.generate(**inputs, max_length=30)
 >>> text = tokenizer.batch_decode(outputs)[0]
 >>> print(text)
-'Can you help me write a formal email to a potential business partner proposing a joint venture?\nInput: Company A: ABC Inc.\nCompany B: XYZ Ltd.\nJoint Venture: A new online platform for e-commerce'
+Can you help me write a formal email to a potential business partner proposing a joint venture?
+Input: Company A: ABC Inc.
+Company B
 ```
 
 ### Example :
@@ -134,7 +142,7 @@ To load and run a model using Flash Attention 2, refer to the snippet below:
 >>> from transformers import PhiForCausalLM, AutoTokenizer
 
 >>> # define the model and tokenizer and push the model and tokens to the GPU.
->>> model = PhiForCausalLM.from_pretrained("microsoft/phi-1_5", torch_dtype=torch.float16, attn_implementation="flash_attention_2").to("cuda")
+>>> model = PhiForCausalLM.from_pretrained("microsoft/phi-1_5", torch_dtype=torch.float16, attn_implementation="flash_attention_2").to("cuda")  # doctest: +SKIP
 >>> tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-1_5")
 
 >>> # feel free to change the prompt to your liking.
@@ -144,9 +152,9 @@ To load and run a model using Flash Attention 2, refer to the snippet below:
 >>> tokens = tokenizer(prompt, return_tensors="pt").to("cuda")
 
 >>> # use the model to generate new tokens.
->>> generated_output = model.generate(**tokens, use_cache=True, max_new_tokens=10)
+>>> generated_output = model.generate(**tokens, use_cache=True, max_new_tokens=10)  # doctest: +SKIP
 
->>> tokenizer.batch_decode(generated_output)[0]
+>>> tokenizer.batch_decode(generated_output)[0]  # doctest: +SKIP
 'If I were an AI that had just achieved a breakthrough in machine learning, I would be thrilled'
 ```
 

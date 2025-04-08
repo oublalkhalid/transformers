@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2020 The Hugging Face Team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -155,13 +154,15 @@ class ModelOutputTester(unittest.TestCase):
         if is_torch_greater_or_equal_than_2_2:
             self.assertEqual(
                 pytree.treespec_dumps(actual_tree_spec),
-                '[1, {"type": "tests.utils.test_model_output.ModelOutputTest", "context": ["a", "c"], "children_spec": [{"type": null, "context": null, "children_spec": []}, {"type": null, "context": null, "children_spec": []}]}]',
+                '[1, {"type": "tests.utils.test_model_output.ModelOutputTest", "context": "[\\"a\\", \\"c\\"]", "children_spec": [{"type": null, "context": null, "children_spec": []}, {"type": null, "context": null, "children_spec": []}]}]',
             )
 
+    # TODO: @ydshieh
+    @unittest.skip(reason="CPU OOM")
     @require_torch
     def test_export_serialization(self):
         if not is_torch_greater_or_equal_than_2_2:
-            return
+            self.skipTest(reason="Export serialization requires torch >= 2.2.0")
 
         model_cls = AlbertForMaskedLM
         model_config = model_cls.config_class()
